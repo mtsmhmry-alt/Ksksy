@@ -7,7 +7,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: unzip -q PvZ-Bot-Android.zip
+      - name: Find or unzip project
+        run: |
+          if [ -z "$(find . -name settings.gradle.kts -not -path './.git/*')" ]; then
+            z=$(ls *.zip | sort -V | tail -n1)
+            unzip -oq "$z"
+          fi
+          d=$(dirname "$(find . -name settings.gradle.kts -not -path './.git/*' | head -n1)")
+          echo "PROJ=$d" >> $GITHUB_ENV
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -16,8 +23,8 @@ jobs:
         with:
           gradle-version: 8.7
       - run: gradle assembleDebug
-        working-directory: AutoClicker
+        working-directory: ${{ env.PROJ }}
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: AutoClicker/app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ env.PROJ }}/app/build/outputs/apk/debug/app-debug.apk
